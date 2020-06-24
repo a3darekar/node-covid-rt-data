@@ -1,5 +1,7 @@
 const axios = require('axios');
 const moment = require('moment');
+const PORT = process.env.PORT || 5000;
+
 var data = {
 	'dates': [],
 	'states': [],
@@ -146,7 +148,9 @@ app.get('/json', (req, res) => {
 
 if (require.main === module) {
 	getValues();
-	app.listen(3000, () => console.log('Server ready'));
+	app.listen(PORT, () => {
+		console.log('Server ready at port ${ PORT }');
+	});
 }
 
 const CronJob = require('cron').CronJob;
