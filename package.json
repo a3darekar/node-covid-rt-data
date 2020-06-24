@@ -12,7 +12,8 @@
   },
   "devDependencies": {},
   "scripts": {
-    "serve": "node app.js"
+    "serve": "node app.js",
+    "start": "node app.js"
   },
   "repository": {
     "type": "git",
