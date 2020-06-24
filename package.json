@@ -1,19 +1,33 @@
 {
   "name": "serve-covid-data",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "description": "node script to periodically compile and serve covid-19 data from api.covid19india.org for the vue app: vue-covid-rt-stats",
+  "main": "app.js",
   "dependencies": {
     "axios": "^0.19.2",
-    "cors": "^2.8.5",
     "cron": "^1.8.2",
     "express": "^4.17.1",
-    "moment": "^2.26.0"
-  }
+    "moment": "^2.26.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "serve": "node app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/knowhere1998/node-covid-rt-data.git"
+  },
+  "keywords": [
+    "covid-19",
+    "r-nought",
+    "r0",
+    "node"
+  ],
+  "author": "Amey Darekar (knowhere1998)",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/knowhere1998/node-covid-rt-data/issues"
+  },
+  "homepage": "https://github.com/knowhere1998/node-covid-rt-data#readme"
 }
