@@ -131,7 +131,9 @@ app.use(function(req, res, next) {
 });
 
 app.get('/', (req, res) => {
-	res.send('Hello World');
+	res.statusCode = 200;
+	res.setHeader('Content-Type', 'text/plain');
+	res.send('node script to periodically compile and serve covid-19 data from api.covid19india.org for the vue app: vue-covid-rt-stats. Use "/json" to see the latest data. ');
 });
 
 app.get('/json', (req, res) => {
@@ -142,7 +144,10 @@ app.get('/json', (req, res) => {
 	});
 });
 
-app.listen(3000, () => console.log('Server ready'));
+if (require.main === module) {
+	getValues();
+	app.listen(3000, () => console.log('Server ready'));
+}
 
 const CronJob = require('cron').CronJob;
 
