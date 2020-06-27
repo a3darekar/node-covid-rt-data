@@ -9,6 +9,7 @@ var data = {
 	'confirmedData': [],
 	'recoveredData': [],
 	'deceasedData': [],
+	'lastUpdated': null
 };
 
 let getStates = new Promise ((resolve, reject) => {
@@ -101,6 +102,7 @@ function getValues() {
 			accumulateDeltas(recoveredDeltas[0], date, backDate, data.recoveredData);
 			accumulateDeltas(deceasedDeltas[0], date, backDate, data.deceasedData);
 			accumulateActiveDeltas(date, backDate);
+			data.lastUpdated = moment();
 		});
 
 		
@@ -149,7 +151,7 @@ app.get('/json', (req, res) => {
 if (require.main === module) {
 	getValues();
 	app.listen(PORT, () => {
-		console.log('Server ready at port ${ PORT }');
+		console.log(`Server ready at port ${ PORT }`);
 	});
 }
 
