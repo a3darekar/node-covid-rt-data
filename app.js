@@ -63,13 +63,14 @@ function accumulateActiveDeltas(date, backDate, firstDate) {
 		let total = Number(confirmedEntry.accumulated) - Number(recoveredEntry.accumulated) - Number(deceasedEntry.accumulated);
 		let rt = 1;
 		let totalForRt = 1;
-		if (backDate > firstDate){
-			let loopDate = moment(backDate);
-			while(loopDate < date){
-				totalForRt += data.confirmedData.filter(entry=> {return entry.state === state.state && entry.date.isSame(loopDate)})[0]['delta'];
-				loopDate.add(1, "d");
-			}
+		let loopDate = moment(backDate);
+		while(loopDate < date){
+			totalForRt += data.confirmedData.filter(entry=> {return entry.state === state.state && entry.date.isSame(loopDate)})[0]['delta'];
+			loopDate.add(1, "d");
+		}
+		if (date != firstDate){
 			let backData = data.rtData.filter(entry=>{return entry.state === state.state && entry.date.isSame(backDate)})[0];
+			console.log(backDate);
 			rt = totalForRt / backData['accumulated'];
 		}
 		rt = (rt != null) ? rt : 1;
