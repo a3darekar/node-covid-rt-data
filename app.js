@@ -1,11 +1,13 @@
-const axios = require('axios');
-const moment = require('moment');
-const PORT = process.env.PORT || 5000;
+const axios 	= require('axios');
+const moment 	= require('moment');
+const PORT 		= process.env.PORT || 3000;
+const path 		= 'covidData.json';
 
 var data = {
 	'dates': [],
 	'states': [],
 	'activeData': [],
+	'rtData': [],
 	'confirmedData': [],
 	'recoveredData': [],
 	'deceasedData': [],
@@ -52,7 +54,7 @@ function accumulateDeltas(fetchedData, date, backDate, arr) {
 	});
 }
 
-function accumulateActiveDeltas(date, backDate) {
+function accumulateActiveDeltas(date, backDate, firstDate) {
 	data.states.forEach(state=>{
 		let confirmedEntry 	= data.confirmedData.filter(entry=> {return entry.state === state.state && entry.date === date})[0];
 		let recoveredEntry 	= data.recoveredData.filter(entry=> {return entry.state === state.state && entry.date === date})[0];
@@ -60,11 +62,19 @@ function accumulateActiveDeltas(date, backDate) {
 		let delta = Number(confirmedEntry.delta) - Number(recoveredEntry.delta) - Number(deceasedEntry.delta);
 		let total = Number(confirmedEntry.accumulated) - Number(recoveredEntry.accumulated) - Number(deceasedEntry.accumulated);
 		let rt = 1;
-		if (! date.isSame(backDate)){
-			let backData = data.activeData.filter(entry=>{return entry.state === state.state && entry.date.isSame(backDate)});
-			rt = total / backData[0].accumulated;
+		let totalForRt = 1;
+		if (backDate > firstDate){
+			let loopDate = moment(backDate);
+			while(loopDate < date){
+				totalForRt += data.confirmedData.filter(entry=> {return entry.state === state.state && entry.date.isSame(loopDate)})[0]['delta'];
+				loopDate.add(1, "d");
+			}
+			let backData = data.rtData.filter(entry=>{return entry.state === state.state && entry.date.isSame(backDate)})[0];
+			rt = totalForRt / backData['accumulated'];
 		}
-		data.activeData.push({'state': state.state, 'date': date, 'rt_date': backDate, 'delta': delta, 'accumulated': total, "rt": rt});
+		rt = (rt != null) ? rt : 1;
+		data.activeData.push({'state': state.state, 'date': date,'delta': delta, 'accumulated': total});
+		data.rtData.push({'state': state.state, 'date': date, 'rt_date': backDate, 'accumulated': total, 'accumulated15': totalForRt, "rt": rt});
 	});
 }
 
@@ -101,14 +111,15 @@ function getValues() {
 			accumulateDeltas(confirmedDeltas[0], date, backDate, data.confirmedData);
 			accumulateDeltas(recoveredDeltas[0], date, backDate, data.recoveredData);
 			accumulateDeltas(deceasedDeltas[0], date, backDate, data.deceasedData);
-			accumulateActiveDeltas(date, backDate);
+			accumulateActiveDeltas(date, backDate, firstDate);
 			data.lastUpdated = moment();
 		});
 
 		
 		let fs = require('fs');
+		console.log("Data last Updated at: " + moment(data.lastUpdated).format('DD-MMM-YYYY hh:mm A'));
 		if (data.dates.length > 0){
-			fs.writeFile ('stateData.json', JSON.stringify(data), function(err) {
+			fs.writeFile (path, JSON.stringify(data), function(err) {
 					if (err) {
 						console.log('json creation failed');
 						throw err;
@@ -135,21 +146,46 @@ app.use(function(req, res, next) {
 });
 
 app.get('/', (req, res) => {
-	res.statusCode = 200;
-	res.setHeader('Content-Type', 'text/plain');
-	res.send('node script to periodically compile and serve covid-19 data from api.covid19india.org for the vue app: vue-covid-rt-stats. Use "/json" to see the latest data. ');
+	fs.readFile('./index.html', function (err, html) {
+		if (html) {
+		res.statusCode = 200;
+		res.writeHeader(200, {"Content-Type": "text/html"});
+		res.write(html);
+		} else {
+			res.writeHeader(404, {"Content-Type": "text/html"});
+			res.sendFile('404.html');
+			res.end();
+		}
+		
+		console.log(req.url + " - " + req.connection.remoteAddress);
+		res.end();
+	});
 });
 
 app.get('/json', (req, res) => {
-	fs.readFile('stateData.json', (err, json) => {
-		let obj = JSON.parse(json);
-		res.json(obj);
+	fs.readFile(path, (err, json) => {
+		if (err){
+			console.log('404 resolution! Json recovery started...');
+			getValues();
+			console.log('Next update will be at midnight!');
+			res.writeHeader(404, {"Content-Type": "text/html"});
+			res.sendFile('404.html');
+			res.end();
+		}else {
+			let obj = JSON.parse(json);
+			res.statusCode = 200;
+			res.json(obj);
+		}
 		console.log(req.url + " - " + req.connection.remoteAddress);
 	});
 });
 
 if (require.main === module) {
-	getValues();
+	if (! fs.existsSync(path)) {
+		console.log('App restarted! Json updation initiated...');
+		getValues();
+		console.log('Next update will be at midnight!');
+	}
 	app.listen(PORT, () => {
 		console.log(`Server ready at port ${ PORT }`);
 	});
