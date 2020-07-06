@@ -217,7 +217,7 @@ app.get('/json', (req, res) => {
 		if (err){
 			console.log('404 resolution! Json recovery started...');
 			getValues();
-			console.log('Next update will be at midnight!');
+			console.log('Next update will be in 6 hours!');
 			res.writeHeader(404, {"Content-Type": "text/html"});
 			res.write("Sorry, but for some reason this data is unavailable at this moment.");
 			res.end();
@@ -234,7 +234,7 @@ if (require.main === module) {
 	if (! fs.existsSync(path)) {
 		console.log('App restarted! Json updation initiated...');
 		getValues();
-		console.log('Next update will be at midnight!');
+		console.log('Next update will be in 6 hours!');
 	}
 	app.listen(PORT, () => {
 		console.log(`Server ready at port ${ PORT }`);
@@ -243,8 +243,8 @@ if (require.main === module) {
 
 const CronJob = require('cron').CronJob;
 
-var job = new CronJob('00 00 00 * * *', function() {
+var job = new CronJob('00 00 */6 * * *', function() {
 	console.log('Updating Json!');
 	getValues();
-	console.log('Next update will be at tomorrow midnight!');
+	console.log('Next update will be in 6 hours!');
 }, null, true, 'Asia/Kolkata');
