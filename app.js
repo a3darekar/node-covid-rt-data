@@ -71,11 +71,11 @@ function accumulateActiveDeltas(date, backDate, firstDate) {
 		}
 		if (date != firstDate){
 			let backData = data.rtData.filter(entry=>{return entry.state === state.state && entry.date.isSame(backDate)})[0];
-			rt = totalForRt / backData['accumulated'];
+			rt = totalForRt / backData['currentActive'];
 		}
 		rt = (rt != null) ? rt : 1;
 		data.activeData.push({'state': state.state, 'date': date,'delta': delta, 'accumulated': total});
-		data.rtData.push({'state': state.state, 'date': date, 'rt_date': backDate, 'accumulated': total, 'accumulated15': totalForRt, "rt": rt});
+		data.rtData.push({'state': state.state, 'date': date, 'rt_date': backDate, 'currentActive': total, 'accumulated15': totalForRt, "rt": rt});
 	});
 }
 
@@ -132,10 +132,10 @@ function getNationwideValues(date, backDate) {
 		}
 		if (date != data.dates[0]){
 			let backData = data.rtData.filter(entry=>{return entry.state == india.state && entry.date.isSame(backDate)})[0];
-			rt = totalForRt / backData['accumulated'];
+			rt = totalForRt / backData['currentActive'];
 		}
 		rt = (rt != null) ? rt : 1;
-		data.rtData.push({'state': india.state, 'date': date, 'rt_date': backDate, 'accumulated': activeCount, 'accumulated15': totalForRt, "rt": rt});
+		data.rtData.push({'state': india.state, 'date': date, 'rt_date': backDate, 'currentActive': activeCount, 'accumulated15': totalForRt, "rt": rt});
 	});
 	data.states.push(india);
 }
