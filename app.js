@@ -47,7 +47,11 @@ let getData = new Promise ((resolve, reject) => {
 
 function accumulateDeltas(fetchedData, date, backDate, arr) {
 	data.states.forEach(state=>{
-		let delta = Number(fetchedData[state.statecode]);
+		let delta = 0
+		console.log(fetchedData)
+		if (fetchedData) {
+			delta = Number(fetchedData[state.statecode]);
+		}
 		let filteredArr = arr.filter(entry=>{return entry.state === state.state});
 		let prev = Number((filteredArr.length > 0) ? filteredArr.slice(-1)[0]['accumulated']: 0);
 		let total = delta + prev;
