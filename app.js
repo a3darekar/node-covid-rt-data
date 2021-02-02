@@ -77,7 +77,8 @@ function accumulateActiveDeltas(date, backDate, firstDate) {
 			let backData = data.rtData.filter(entry=>{return entry.state === state.state && entry.date.isSame(backDate)})[0];
 			rt = totalForRt / backData['accumulated'];
 		}
-		rt = (rt != null) ? rt : 1;
+		rt = sanitize(rt);
+		console.log(rt);
 		data.activeData.push({'state': state.state, 'date': date,'delta': delta, 'accumulated': total});
 		data.rtData.push({'state': state.state, 'date': date, 'rt_date': backDate, 'accumulated': total, 'accumulated15': totalForRt, "rt": rt});
 	});
@@ -142,6 +143,13 @@ function getNationwideValues(date, backDate) {
 		data.rtData.push({'state': india.state, 'date': date, 'rt_date': backDate, 'accumulated': activeCount, 'accumulated15': totalForRt, "rt": rt});
 	});
 	data.states.push(india);
+}
+
+function sanitize(value) {
+	if (isNaN(value) || value === Infinity){
+		return 1;
+	}
+	return value;
 }
 
 
