@@ -78,7 +78,6 @@ function accumulateActiveDeltas(date, backDate, firstDate) {
 			rt = totalForRt / backData['accumulated'];
 		}
 		rt = sanitize(rt);
-		console.log(rt);
 		data.activeData.push({'state': state.state, 'date': date,'delta': delta, 'accumulated': total});
 		data.rtData.push({'state': state.state, 'date': date, 'rt_date': backDate, 'accumulated': total, 'accumulated15': totalForRt, "rt": rt});
 	});
