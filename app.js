@@ -2,22 +2,29 @@ const axios 	= require('axios');
 const moment 	= require('moment');
 const path 		= require('path');
 const PORT 		= process.env.PORT || 3000;
-const jsonPath	= 'covidData.json';
+var lastUpdated = null;
 
 moment.updateLocale('en', {
     monthsShort :  'Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sept_Oct_Nov_Dec'.split('_')
 });
 
+const paths = {
+	'data': 'data.json',
+	'stats': 'stats.json'
+};
+
 var data = {
 	'dates': [],
 	'states': [],
+	'rtData': []
+};
+
+var stats = {
 	'activeData': [],
-	'rtData': [],
 	'confirmedData': [],
 	'recoveredData': [],
 	'deceasedData': [],
-	'lastUpdated': null
-};
+}
 
 let getStates = new Promise ((resolve, reject) => {
 	axios.get('https://api.covid19india.org/v2/state_district_wise.json').then(response =>{
@@ -61,16 +68,16 @@ function accumulateDeltas(fetchedData, date, backDate, arr) {
 
 function accumulateActiveDeltas(date, backDate, firstDate) {
 	data.states.forEach(state=>{
-		let confirmedEntry 	= data.confirmedData.filter(entry=> {return entry.state === state.state && entry.date === date})[0];
-		let recoveredEntry 	= data.recoveredData.filter(entry=> {return entry.state === state.state && entry.date === date})[0];
-		let deceasedEntry 	= data.deceasedData.filter(entry=> {return entry.state === state.state && entry.date === date})[0];
+		let confirmedEntry 	= stats.confirmedData.filter(entry=> {return entry.state === state.state && entry.date === date})[0];
+		let recoveredEntry 	= stats.recoveredData.filter(entry=> {return entry.state === state.state && entry.date === date})[0];
+		let deceasedEntry 	= stats.deceasedData.filter(entry=> {return entry.state === state.state && entry.date === date})[0];
 		let delta = Number(confirmedEntry.delta) - Number(recoveredEntry.delta) - Number(deceasedEntry.delta);
 		let total = Number(confirmedEntry.accumulated) - Number(recoveredEntry.accumulated) - Number(deceasedEntry.accumulated);
 		let rt = 1;
 		let totalForRt = 0;
 		let loopDate = moment(backDate);
 		while(loopDate < date){
-			totalForRt += data.confirmedData.filter(entry=> {return entry.state === state.state && entry.date.isSame(loopDate)})[0]['delta'];
+			totalForRt += stats.confirmedData.filter(entry=> {return entry.state === state.state && entry.date.isSame(loopDate)})[0]['delta'];
 			loopDate.add(1, "d");
 		}
 		if (date != firstDate){
@@ -78,7 +85,7 @@ function accumulateActiveDeltas(date, backDate, firstDate) {
 			rt = totalForRt / backData['accumulated'];
 		}
 		rt = sanitize(rt);
-		data.activeData.push({'state': state.state, 'date': date,'delta': delta, 'accumulated': total});
+		stats.activeData.push({'state': state.state, 'date': date,'delta': delta, 'accumulated': total});
 		data.rtData.push({'state': state.state, 'date': date, 'rt_date': backDate, 'accumulated': total, 'accumulated15': totalForRt, "rt": rt});
 	});
 }
@@ -113,25 +120,25 @@ function getNationwideValues(date, backDate) {
 		let deceasedDelta = 0;
 		let recoveredDelta = 0;
 		data.states.forEach(state=>{
-			confirmedDelta = confirmedDelta + Number(data.confirmedData.filter(entry => { return entry.state == state.state && entry.date == date })[0]['delta']);
-			recoveredDelta = recoveredDelta + Number(data.recoveredData.filter(entry => { return entry.state == state.state && entry.date == date })[0]['delta']);
-			deceasedDelta = deceasedDelta + Number(data.deceasedData.filter(entry => { return entry.state == state.state && entry.date == date })[0]['delta']);
+			confirmedDelta = confirmedDelta + Number(stats.confirmedData.filter(entry => { return entry.state == state.state && entry.date == date })[0]['delta']);
+			recoveredDelta = recoveredDelta + Number(stats.recoveredData.filter(entry => { return entry.state == state.state && entry.date == date })[0]['delta']);
+			deceasedDelta = deceasedDelta + Number(stats.deceasedData.filter(entry => { return entry.state == state.state && entry.date == date })[0]['delta']);
 		});
 		let activeDelta = confirmedDelta - deceasedDelta - recoveredDelta;
 		confirmedCount += confirmedDelta;
 		recoveredCount += recoveredDelta;
 		deceasedCount += deceasedDelta;
 		activeCount += activeDelta;
-		data.confirmedData.push({'state': india.state, 'date': date, 'delta': confirmedDelta, 'accumulated': confirmedCount});
-		data.recoveredData.push({'state': india.state, 'date': date, 'delta': recoveredDelta, 'accumulated': recoveredCount});
-		data.deceasedData.push({'state': india.state, 'date': date, 'delta': deceasedDelta, 'accumulated': deceasedCount});
-		data.activeData.push({'state': india.state, 'date': date, 'delta': activeDelta, 'accumulated': activeCount});
+		stats.confirmedData.push({'state': india.state, 'date': date, 'delta': confirmedDelta, 'accumulated': confirmedCount});
+		stats.recoveredData.push({'state': india.state, 'date': date, 'delta': recoveredDelta, 'accumulated': recoveredCount});
+		stats.deceasedData.push({'state': india.state, 'date': date, 'delta': deceasedDelta, 'accumulated': deceasedCount});
+		stats.activeData.push({'state': india.state, 'date': date, 'delta': activeDelta, 'accumulated': activeCount});
 
 		let rt = 1;
 		let totalForRt = 0;
 		let loopDate = moment(backDate);
 		while(loopDate < date){
-			totalForRt += data.confirmedData.filter(entry=> {return entry.state == india.state && entry.date.isSame(loopDate)})[0]['delta'];
+			totalForRt += stats.confirmedData.filter(entry=> {return entry.state == india.state && entry.date.isSame(loopDate)})[0]['delta'];
 			loopDate.add(1, "d");
 		}
 		if (date != data.dates[0]){
@@ -168,26 +175,35 @@ function getValues() {
 			let deceasedDeltas 	= data.info.filter(entry=> {
 				return entry.status === 'Deceased' && entry.date === date.format('DD-MMM-YY')
 			});
-			accumulateDeltas(confirmedDeltas[0], date, backDate, data.confirmedData);
-			accumulateDeltas(recoveredDeltas[0], date, backDate, data.recoveredData);
-			accumulateDeltas(deceasedDeltas[0], date, backDate, data.deceasedData);
+			accumulateDeltas(confirmedDeltas[0], date, backDate, stats.confirmedData);
+			accumulateDeltas(recoveredDeltas[0], date, backDate, stats.recoveredData);
+			accumulateDeltas(deceasedDeltas[0], date, backDate, stats.deceasedData);
 			accumulateActiveDeltas(date, backDate, firstDate);
-			data.lastUpdated = moment();
 		});
 
 		getNationwideValues();
+		lastUpdated = moment().format('DD-MMM-YYYY hh:mm A');
 
 		let fs = require('fs');
-		console.log("Data last Updated at: " + moment(data.lastUpdated).format('DD-MMM-YYYY hh:mm A'));
+		console.log("Data last Updated at: " + moment(lastUpdated).format('DD-MMM-YYYY hh:mm A'));
+		delete data.info;
 		if (data.dates.length > 0){
-			fs.writeFile (jsonPath, JSON.stringify(data), function(err) {
+			fs.writeFile('stats.json', JSON.stringify(stats), function(err) {
 					if (err) {
 						console.log('json creation failed');
 						throw err;
 					}
-					console.log('Json updated!');
 				}
 			);
+
+			fs.writeFile('data.json', JSON.stringify(data), function(err) {
+					if (err) {
+						console.log('json creation failed');
+						throw err;
+					}
+				}
+			);
+			console.log('Json updated!');
 		};
 	}, error => {
 		reject('Error!');
@@ -223,22 +239,30 @@ app.get('/', (req, res) => {
 	});
 });
 
-app.get('/json', (req, res) => {
-	fs.readFile(jsonPath, (err, json) => {
-		if (err){
-			console.log('404 resolution! Json recovery started...');
-			getValues();
-			console.log('Next update will be in 6 hours!');
-			res.writeHeader(404, {"Content-Type": "text/html"});
-			res.write("Sorry, but for some reason this data is unavailable at this moment.");
-			res.end();
-		}else {
-			let obj = JSON.parse(json);
-			res.statusCode = 200;
-			res.json(obj);
-		}
-		console.log(req.url + " - " + req.connection.remoteAddress);
-	});
+app.get('/:jsonPath', (req, res) => {
+	let jsonPath = req.params.jsonPath;
+	if(paths[jsonPath]){
+		fs.readFile(paths[jsonPath], (err, json) => {
+			if (err){
+				console.log('404 resolution! Json recovery started...');
+				getValues();
+				console.log('Next update will be in 6 hours!');
+				res.writeHeader(404, {"Content-Type": "text/html"});
+				res.write("Sorry, but for some reason this data is unavailable at this moment.");
+				res.end();
+			}else {
+				let obj = JSON.parse(json);
+				res.statusCode = 200;
+				obj['lastUpdated'] = lastUpdated;
+				res.json(obj);
+			}
+			console.log(req.url + " - " + req.connection.remoteAddress);
+		});
+	}else{
+		res.writeHeader(404, {"Content-Type": "text/html"});
+		res.write("Sorry, but for some reason this data is unavailable at this moment.");
+		res.end();
+	}
 });
 
 if (require.main === module) {
