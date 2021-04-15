@@ -4,9 +4,9 @@ const path 		= require('path');
 const PORT 		= process.env.PORT || 3000;
 var lastUpdated = null;
 
-moment.updateLocale('en', {
-    monthsShort :  'Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sept_Oct_Nov_Dec'.split('_')
-});
+// moment.updateLocale('en', {
+//     monthsShort :  'Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec'.split('_')
+// });
 
 const paths = {
 	'data': 'data.json',
@@ -97,7 +97,9 @@ function getDates() {
 			dates.add(value.date);
 		});
 		dates = Array.from(dates);
-		return dates.map(value=> {return moment(value, 'DD-MMM-YY')});
+		return dates.map(value=> {
+			return moment(value, 'DD-MMM-YY');
+		});
 	} catch (error){
 		console.log(error);
 		return null;
@@ -182,10 +184,10 @@ function getValues() {
 		});
 
 		getNationwideValues();
-		lastUpdated = moment().format('DD-MMM-YYYY hh:mm A');
+		lastUpdated = moment();
 
 		let fs = require('fs');
-		console.log("Data last Updated at: " + moment(lastUpdated).format('DD-MMM-YYYY hh:mm A'));
+		console.log("Data last Updated at: " + moment(lastUpdated).format('DD-MMM-YYY hh:mm A'));
 		delete data.info;
 		if (data.dates.length > 0){
 			fs.writeFile('stats.json', JSON.stringify(stats), function(err) {
