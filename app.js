@@ -96,7 +96,7 @@ function getDates() {
 		data.info.forEach(value=>{
 			dates.add(value.date);
 		});
-		dates = Array.from(dates);
+		dates = Array.from(dates).slice(0, 500);
 		return dates.map(value=> {
 			return moment(value, 'DD-MMM-YY');
 		});
