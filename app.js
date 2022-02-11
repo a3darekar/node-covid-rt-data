@@ -184,7 +184,7 @@ function getValues() {
 		});
 
 		getNationwideValues();
-		lastUpdated = moment();
+		lastUpdated = data.dates.slice(-1);
 
 		let fs = require('fs');
 		console.log("Data last Updated at: " + moment(lastUpdated).format('DD-MMM-YYY hh:mm A'));
