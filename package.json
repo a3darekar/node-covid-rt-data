@@ -4,7 +4,7 @@
   "description": "node script to periodically compile and serve covid-19 data from api.covid19india.org for the vue app: vue-covid-rt-stats",
   "main": "app.js",
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^0.21.2",
     "cron": "^1.8.2",
     "express": "^4.17.1",
     "moment": "^2.26.0",
