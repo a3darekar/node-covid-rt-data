@@ -96,7 +96,7 @@ function getDates() {
 		data.info.forEach(value=>{
 			dates.add(value.date);
 		});
-		dates = Array.from(dates).slice(0, 500);
+		dates = Array.from(dates).slice(0, 300);
 		return dates.map(value=> {
 			return moment(value, 'DD-MMM-YY');
 		});
@@ -164,7 +164,10 @@ function sanitize(value) {
 function getValues() {
 	getData.then(value => {
 		data.dates = getDates();
+		lastUpdated = data.dates.slice(-1)[0];	
 		let firstDate = data.dates[0];
+		console.log(firstDate, lastUpdated);
+
 		data.dates.forEach(date=>{
 			let backDate = moment(date).subtract(15, 'd');
 			backDate = (backDate > firstDate) ? backDate : firstDate;
@@ -184,10 +187,9 @@ function getValues() {
 		});
 
 		getNationwideValues();
-		lastUpdated = data.dates.slice(-1);
 
 		let fs = require('fs');
-		console.log("Data last Updated at: " + moment(lastUpdated).format('DD-MMM-YYY hh:mm A'));
+		console.log("Data last Updated at: " + moment(lastUpdated).format('DD-MMM-YYYY hh:mm A'));
 		delete data.info;
 		if (data.dates.length > 0){
 			fs.writeFile('stats.json', JSON.stringify(stats), function(err) {
